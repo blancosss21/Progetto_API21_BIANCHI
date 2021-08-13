@@ -3,34 +3,53 @@
 #include <string.h>
 #include <limits.h>
 
+
+
+
+
 #define MAX 30000
 //#define INT_MAX 100000000
-int peso= INT_MAX;
+//int peso= INT_MAX;
+typedef struct {
+    unsigned int w;
+    unsigned int dist;
+}ElMinHeap;
+
+typedef struct{
+    unsigned int ArraySize, HeapSize;
+    unsigned int *Pos;
+    ElMinHeap *array;
+}MinHeap;
+
 
 
 void AggiungiGrafo(unsigned int d);
+void dijkstra(unsigned int w);
 //void TopK();
-//inizio
-int ArraySize, HeapSize, tot;
-int left(int i) { return 2*i+1;}
-int right(int i) { return 2*i+2;}
-int parent(int i) {return (i-1)/2;}
-void swap(int A[MAX], int i, int j){
-    int tmp = A[i];
+
+
+
+unsigned int left(unsigned int i) { return 2*i+1;}
+unsigned int right(unsigned int i) { return 2*i+2;}
+unsigned int parent(unsigned int i) {return (i-1)/2;}
+void swap(unsigned int A[MAX], unsigned int i,unsigned  int j){
+    unsigned int tmp = A[i];
     A[i] = A[j];
     A[j] =tmp;}
-void MaxHeapify(int A[MAX], int i);
-void BuildHeap(int A[MAX]);
-void HeapSort(int A[MAX]);
-void MinHeapInsert(int A[MAX], int Key);
-void HeapDecreaseKey(int A[MAX], int i, int Key);
-void HeapExtractMin(int A[MAX]);
 
-//fine
+//void MaxHeapify(unsigned int A[MAX], unsigned int i);
+//void BuildHeap(unsigned int A[MAX]);
+//void HeapSort(unsigned int A[MAX]);
+//void MinHeapInsert(unsigned int A[MAX], unsigned int Key);
+void HeapDecreaseKey(unsigned int A[MAX], unsigned int i,unsigned  int Key);
+unsigned int HeapExtractMin(unsigned int A[MAX]);
+
 
 
 unsigned int myAtoi(char* str);
 unsigned int **Matrice;
+MinHeap *PriorityCoda;
+
 
 int main(void) {
     unsigned int d;
@@ -44,6 +63,12 @@ int main(void) {
     for(i=0;i<d;i++){
         Matrice[i] = malloc(d*sizeof **Matrice);
     }
+    PriorityCoda= malloc(sizeof *PriorityCoda);
+    PriorityCoda->Pos=malloc(d*sizeof PriorityCoda->Pos);
+    PriorityCoda->array=malloc(d*sizeof PriorityCoda->array);
+    PriorityCoda->ArraySize=d;
+    PriorityCoda->HeapSize=0;
+
     char str1[]= "AggiungiGrafo";
     char str2[]= "TopK";
 
@@ -56,25 +81,27 @@ int main(void) {
 
     while(1){
 
-        if(!scanf("%s\n",res)) {
-
-        }
+        if(!scanf("%s\n",res)) {};
         if(feof(stdin))
             break;
         if (!strcmp(res, str1))
             AggiungiGrafo(d);
         else if (!strcmp(res, str2))
-            printf("ciao");
             //Topk();
-
-        else break;
+            printf("ciao");
+        else
+            break;
     }
+
+
+
 
     return 0;
 
 }
 
 void AggiungiGrafo(unsigned int d) {
+
     char *res;
     char riga[MAX];
     char *tok;
@@ -86,14 +113,14 @@ void AggiungiGrafo(unsigned int d) {
         printf("%s", riga);
         tok=strtok(res, ",");
         Matrice[c][0] = myAtoi(tok);
-        for (unsigned int s = 1; s < d; s++) {
+        for (unsigned int e = 1; e < d; e++) {
             tok= strtok(NULL, ",");
-            Matrice[c][s] = myAtoi(tok);
+            Matrice[c][e] = myAtoi(tok);
         }
     }
     free(res);
 
-    //dijistra
+    dijkstra(d);
 
     }
 
@@ -117,20 +144,29 @@ unsigned int myAtoi(char *str) {
 
 
 /*void TopK(){
-     printf("ciao");
+    if(Due grafi hanno lo stesso peso){
+         stampo classifica fino a k e se due hanno stesso peso quello che arriva prima e poi l'altro
+    }
+    else if (due grafi hanno peso diverso)
+             stampo classifica fino a k
+
+    else printf("\n");
+
 }*/
 
-void BuildHeap(int A[MAX])
-{
-    int i;
+
+
+
+/*void BuildHeap(unsigned int A[MAX]){
+    unsigned int i;
     HeapSize = ArraySize;
     for (i=ArraySize/2; i>=0; i--)
         MaxHeapify(A, i);
-}
+}*/
 
-void MaxHeapify(int A[MAX], int i)
+/*void MaxHeapify(unsigned int A[MAX],unsigned  int i)
 {
-    int l,r,largest;
+    unsigned int l,r,largest;
     l = left(i);
     r = right(i);
     if (l < HeapSize && A[l] > A[i])
@@ -143,7 +179,7 @@ void MaxHeapify(int A[MAX], int i)
         MaxHeapify(A, largest);
     }
 }
-void HeapSort(int A[MAX]){
+void HeapSort(unsigned int A[MAX]){
     int i;
     BuildHeap(A);
     for (i=ArraySize-1; i>=1; i--) {
@@ -151,18 +187,18 @@ void HeapSort(int A[MAX]){
         HeapSize--;
         MaxHeapify(A, 0);
     }
-}
+}*/
 
 
 
-void MinHeapify(int A[MAX], int i){
-    int l,r,smallest;
+void MinHeapify(unsigned int A[MAX], unsigned int i){
+    unsigned int l,r,smallest;
     l = left(i);
     r = right(i);
-    if (l < HeapSize && A[l] < A[i])
+    if (l < PriorityCoda->HeapSize && A[l] < A[i])
         smallest = l;
     else smallest = i;
-    if (r < HeapSize && A[r] < A[smallest])
+    if (r < PriorityCoda->HeapSize && A[r] < A[smallest])
         smallest = r;
     if (smallest != i) {
         swap(A, i, smallest);
@@ -172,21 +208,21 @@ void MinHeapify(int A[MAX], int i){
 
 
 
-void HeapExtractMin(int A[MAX]){
-    int i,min;
-    HeapSize = ArraySize;
-    if(HeapSize < 1)
-        return NULL;
+unsigned int HeapExtractMin(unsigned int A[MAX]){
+    unsigned int min;
+    PriorityCoda->HeapSize = PriorityCoda->ArraySize;
+    if(PriorityCoda->HeapSize < 1)
+        return 1;
     min = A[1];
-    A[1]= A[HeapSize];
-    MinHeapify(int A[MAX], int i);
+    A[1]= A[PriorityCoda->HeapSize];
+    MinHeapify(A, 1);
     return min;
 }
 
-void HeapDecreaseKey(int A[MAX], int i, int Key) {
-    int p = parent(i);
+void HeapDecreaseKey(unsigned int A[MAX],unsigned  int i, unsigned int Key) {
+    unsigned int p = parent(i);
     if (Key > A[i])
-        return NULL;
+        return;
     A[i] = Key;
     while (i > 1 && A[p] > A[i]) {
         swap(A, i, p);
@@ -194,20 +230,41 @@ void HeapDecreaseKey(int A[MAX], int i, int Key) {
     }
 }
 
-void MinHeapInsert(int A[MAX], int Key){
+/*void MinHeapInsert(unsigned int A[MAX],unsigned  int Key){
     HeapSize=ArraySize;
     HeapSize++;
     A[HeapSize]= INT_MAX;
-    HeapDecreaseKey(int A[MAX], int HeapSize, int Key);
+    HeapDecreaseKey(A, HeapSize, Key);
 
-}
+}*/
 
-void dijkstra(int G[MAX][MAX],int w,int s){
-    int Q=0;
-    int sDist = 0:
-    int sPrev = NULL;
-    MinHeapInsert(Q, s);
+void dijkstra(unsigned int w){
+    unsigned int u;
+    unsigned int uDist;
+    unsigned int uPrev;
+    unsigned int vDist;
+    unsigned int sDist = 0;
+    unsigned int sPrev;
+    (PriorityCoda->array[0]).w=0;
+    (PriorityCoda->array[0]).dist=0;
+    PriorityCoda->HeapSize++;
 
+
+    for(u=1; u !=0; u++){
+        (PriorityCoda->array[u]).w=u;
+        (PriorityCoda->array[u]).dist=UINT_MAX;
+        PriorityCoda->HeapSize++;
+    }
+    while (Q!=0){      //?
+        u= HeapExtractMin(Q);
+        for(unsigned int v=0; v!=u;v++){
+            if((PriorityCoda->array[u]).dist> (PriorityCoda->array[u]).dist+(PriorityCoda->array[u]).w) {
+                (PriorityCoda->array[v]).dist = (PriorityCoda->array[u]).dist + (PriorityCoda->array[u]).w;
+                unsigned int vPrev = u;
+                HeapDecreaseKey(Q, v, vDist);
+            }
+        }
+    }
 
 
 
