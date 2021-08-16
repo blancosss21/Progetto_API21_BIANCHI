@@ -5,28 +5,32 @@
 
 
 
-
-
-#define MAX 30000
+#define MAX 3000000
 //#define INT_MAX 100000000
 //int peso= INT_MAX;
+
+//typedef enum {NONVISITATO =0, VISITATO= 1} BOOL;
 typedef struct {
-    unsigned int w;
-    unsigned int dist;
+    unsigned int w;  //nodo
+    unsigned int dist; //distanza da quel nodo
+    //devo aggiornare la distanza minima totale dal  nodo sorgente corrente
+    //indice del nodo 
+    //BOOL;
 }ElMinHeap;
 
+
 typedef struct{
-    unsigned int ArraySize, HeapSize;
-    unsigned int *Pos;
+    unsigned int ArraySize, HeapSize;  //lunghezza dell'Array e dello Heap
+    unsigned int *Pos; //serve per sapere dove stanno i nodi nella priorityqueue, siccome essendo un min heap,non sono in ordine di indice ma di distanza migliore
     ElMinHeap *array;
 }MinHeap;
 
 
 
 void AggiungiGrafo(unsigned int d);
-void dijkstra(unsigned int w);
+void dijkstra(unsigned int d); //dovrei metterci anche nodo[d][d]?
 //void TopK();
-
+unsigned int somma (unsigned int v[],unsigned int n);
 
 
 unsigned int left(unsigned int i) { return 2*i+1;}
@@ -48,7 +52,8 @@ unsigned int HeapExtractMin(unsigned int A[MAX]);
 
 unsigned int myAtoi(char* str);
 unsigned int **Matrice;
-MinHeap *PriorityCoda;
+MinHeap *PriorityQueue;
+
 
 
 int main(void) {
@@ -57,17 +62,17 @@ int main(void) {
     int i;
 
 
-    if (!scanf("%u %u\n", &d, &k)){};
+    if (scanf("%u %u\n", &d, &k)){};
     printf("%u %u\n", d, k);
     Matrice = malloc(d*sizeof *Matrice);
     for(i=0;i<d;i++){
         Matrice[i] = malloc(d*sizeof **Matrice);
     }
-    PriorityCoda= malloc(sizeof *PriorityCoda);
-    PriorityCoda->Pos=malloc(d*sizeof PriorityCoda->Pos);
-    PriorityCoda->array=malloc(d*sizeof PriorityCoda->array);
-    PriorityCoda->ArraySize=d;
-    PriorityCoda->HeapSize=0;
+    PriorityQueue= malloc(sizeof *PriorityQueue);
+    PriorityQueue->Pos=malloc(d*sizeof PriorityQueue->Pos);
+    PriorityQueue->array=malloc(d*sizeof PriorityQueue->array);
+    PriorityQueue->ArraySize=d;
+    PriorityQueue->HeapSize=0;
 
     char str1[]= "AggiungiGrafo";
     char str2[]= "TopK";
@@ -120,9 +125,9 @@ void AggiungiGrafo(unsigned int d) {
     }
     free(res);
 
-    dijkstra(d);
+    dijkstra(d); //dovrei metterci anche nodo[d][d]?
 
-    }
+}
 
 
 // A simple atoi() function
@@ -144,6 +149,7 @@ unsigned int myAtoi(char *str) {
 
 
 /*void TopK(){
+ * devo avere una classifica
     if(Due grafi hanno lo stesso peso){
          stampo classifica fino a k e se due hanno stesso peso quello che arriva prima e poi l'altro
     }
@@ -191,14 +197,17 @@ void HeapSort(unsigned int A[MAX]){
 
 
 
+
+
+
 void MinHeapify(unsigned int A[MAX], unsigned int i){
     unsigned int l,r,smallest;
     l = left(i);
     r = right(i);
-    if (l < PriorityCoda->HeapSize && A[l] < A[i])
+    if (l < PriorityQueue->HeapSize && A[l] < A[i])
         smallest = l;
     else smallest = i;
-    if (r < PriorityCoda->HeapSize && A[r] < A[smallest])
+    if (r < PriorityQueue->HeapSize && A[r] < A[smallest])
         smallest = r;
     if (smallest != i) {
         swap(A, i, smallest);
@@ -210,11 +219,11 @@ void MinHeapify(unsigned int A[MAX], unsigned int i){
 
 unsigned int HeapExtractMin(unsigned int A[MAX]){
     unsigned int min;
-    PriorityCoda->HeapSize = PriorityCoda->ArraySize;
-    if(PriorityCoda->HeapSize < 1)
+    PriorityQueue->HeapSize = PriorityQueue->ArraySize;
+    if(PriorityQueue->HeapSize < 1)
         return 1;
     min = A[1];
-    A[1]= A[PriorityCoda->HeapSize];
+    A[1]= A[PriorityQueue->HeapSize];
     MinHeapify(A, 1);
     return min;
 }
@@ -231,77 +240,52 @@ void HeapDecreaseKey(unsigned int A[MAX],unsigned  int i, unsigned int Key) {
 }
 
 /*void MinHeapInsert(unsigned int A[MAX],unsigned  int Key){
-    HeapSize=ArraySize;
-    HeapSize++;
-    A[HeapSize]= INT_MAX;
-    HeapDecreaseKey(A, HeapSize, Key);
+    PriorityQueue->HeapSize=PriorityQueue->ArraySize;
+    PriorityQueue->HeapSize++;
+    A[PriorityQueue->HeapSize]= INT_MAX;
+    HeapDecreaseKey(A, PriorityQueue->HeapSize, Key);
 
 }*/
 
-void dijkstra(unsigned int w){
+void dijkstra(unsigned int d){   //dovrei metterci anche nodo[d][d]?
     unsigned int u;
-    unsigned int uDist;
-    unsigned int uPrev;
-    unsigned int vDist;
-    unsigned int sDist = 0;
-    unsigned int sPrev;
-    (PriorityCoda->array[0]).w=0;
-    (PriorityCoda->array[0]).dist=0;
-    PriorityCoda->HeapSize++;
+
+    (PriorityQueue->array[0]).w=0;
+    (PriorityQueue->array[0]).dist=0;
+    PriorityQueue->HeapSize++;
 
 
     for(u=1; u !=0; u++){
-        (PriorityCoda->array[u]).w=u;
-        (PriorityCoda->array[u]).dist=UINT_MAX;
-        PriorityCoda->HeapSize++;
+        (PriorityQueue->array[u]).w=u;
+        (PriorityQueue->array[u]).dist=UINT_MAX;
+        PriorityQueue->HeapSize++;
     }
-    while (Q!=0){      //?
-        u= HeapExtractMin(Q);
-        for(unsigned int v=0; v!=u;v++){
-            if((PriorityCoda->array[u]).dist> (PriorityCoda->array[u]).dist+(PriorityCoda->array[u]).w) {
-                (PriorityCoda->array[v]).dist = (PriorityCoda->array[u]).dist + (PriorityCoda->array[u]).w;
-                unsigned int vPrev = u;
-                HeapDecreaseKey(Q, v, vDist);
+
+
+    while ((&(PriorityQueue->array[u]).w)!=0){
+        u= HeapExtractMin((&(PriorityQueue->array[u]).w));
+        for(unsigned int v=1; v!=(PriorityQueue->HeapSize++);v++){    //prima avevo v!=u
+            if((PriorityQueue->array[u]).dist> (PriorityQueue->array[u]).dist+ Matrice[u][v]){   //PriorityQueue->array[u]).w non è corretto!!!
+                (PriorityQueue->array[v]).dist = (PriorityQueue->array[u]).dist + Matrice[u][v]; //poichè la funzione w(u,v) è la distanza fra u e v (che ho nella matrice)
+                //unsigned int vPrev = u; mi interessa solo la lunghezza non mi interessa salvare i valori
+                HeapDecreaseKey((&(PriorityQueue->array[u]).w), v, Matrice[u][v]);
             }
         }
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
+    //dovrei fare somma dei cammini minimi
+    somma(&(PriorityQueue->array[u]).w, PriorityQueue->HeapSize++);
 }
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+unsigned int somma (unsigned int v[], unsigned int n) {
+    unsigned int i;
+    unsigned int s=0;
+    for (i=0;i<n;i++) {
+        s=s+v[i];
+    }
+    return s;
+}
 
 
 
