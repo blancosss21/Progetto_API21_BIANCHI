@@ -51,6 +51,58 @@ int dijkstra(int d) {
     }
     return somma;
 }
+/*char* strtok1(char *str, const char* delim) {
+    static char* buffer;
+    if(str != NULL)
+        buffer = str;
+    if(buffer[0] == '\0') return NULL;
+    char *ret = buffer, *b;
+    const char *d;
+    for(b = buffer; *b !='\0'; b++) {
+        for (d = delim; *d != '\0'; d++) {
+            if (*b == *d) {
+                *b = '\0';
+                //buffer = b + 1;
+                // skip the beginning delimiters
+                if (b == ret) {
+                    ret++;
+                    continue;
+                }
+                return ret;
+            }
+        }
+    }
+    return ret;
+}*/
+char* strtok1(char *str, const char* delim) {
+    static char* buffer;
+    if(str != NULL) buffer = str;
+    if(buffer[0] == '\0') return NULL;
+
+    char *ret = buffer, *b;
+    const char *d;
+
+    for(b = buffer; *b !='\0'; b++) {
+        for(d = delim; *d != '\0'; d++) {
+            if(*b == *d) {
+                *b = '\0';
+                buffer = b+1;
+
+// skip the beginning delimiters
+                if(b == ret) {
+                    ret++;
+                    continue;
+                }
+                return ret;
+            }
+        }
+    }
+    buffer = b;
+    return ret;
+}
+
+
+
 
 void aggiungiGrafo(int d) {
     char riga[MAX];
@@ -59,10 +111,10 @@ void aggiungiGrafo(int d) {
         if (fgets(riga, MAX, stdin) == NULL) {
             exit(1);
         }
-        tok = strtok(riga, ",");
+        tok = strtok1(riga, ",");
         Matrice[c][0] = myAtoi(tok);
         for (int e = 1; e < d; e++) {
-            tok = strtok(NULL, ",");
+            tok = strtok1(NULL, ",");
             Matrice[c][e] = myAtoi(tok);
         }
     }
@@ -91,27 +143,32 @@ void aggiornaCamminiMinimi(struct prestazioneGrafo *camminiMinimi, int k, int nu
     }
 }
 
-/*void topkCompleto(struct prestazioneGrafo *camminiMinimi, int k) {
-    for (int i = 0; i < k; ++i) {
-        if (camminiMinimi[i].numeroGrafo != -1)
-            printf("il grafo %d ha un percorso di %d\n", camminiMinimi[i].numeroGrafo, camminiMinimi[i].costoGrafo);
+void topk(struct prestazioneGrafo *camminiMinimi, int numGrafi, int k) {
+    if (numGrafi == 0){
+        printf("\n");
+        return;
     }
-}*/
-
-void topk(struct prestazioneGrafo *camminiMinimi, int k) {
-
-    for (int i = 0; i < k; ++i) {
+    int ripeti;
+    if (numGrafi < k)
+        ripeti = numGrafi;
+    else
+        ripeti = k;
+    for (int i = 0; i < ripeti - 1; ++i) {
+        //puts(camminiMinimi[i].numeroGrafo);
+        //write(0,camminiMinimi[i].numeroGrafo,strlen(camminiMinimi[i].numeroGrafo));
         printf("%d ", camminiMinimi[i].numeroGrafo);
-
-
     }
+    printf("%d\n", camminiMinimi[ripeti - 1].numeroGrafo);
 }
 
 
 int main() {
     int d;
     int k;
-    int numGrafo = 0;
+    int numGrafi = 0;
+    char res [MAX];
+    //int c;
+    //scanf("%u %u\n", &d, &k)     (fgets(riga, MAX, stdin)
     if (scanf("%u %u\n", &d, &k) != 2) {
         return -1;
     }
@@ -127,19 +184,21 @@ int main() {
         camminiMinimi[i].numeroGrafo = -1;
         camminiMinimi[i].costoGrafo = -1;
     }
-    char str1[] = "AggiungiGrafo";
-    char str2[] = "TopK";
-    char *res = malloc(14 * sizeof(char));  //prima per 13
-    while (!feof(stdin)) {
-        if (scanf("%s\n", res) != 1) {
+    //char str1[] = "AggiungiGrafo";
+    //char str2[] = "TopK";
+    //char *res = malloc(14 * sizeof(char));  //prima per 13
+    while (fgets(res, MAX, stdin) !=NULL) {
+        /*if (scanf("%s\n", res) != 1) {  //(fgets(riga, MAX, stdin)
             return -1;
-        } else if (!strcmp(res, str1)) {
+        }*/
+        if (res[0] == 'A') {
             aggiungiGrafo(d);
-            aggiornaCamminiMinimi(camminiMinimi, k, dijkstra(d), numGrafo);
-        } else if (!strcmp(res, str2)) {
-            topk(camminiMinimi, k);
+            aggiornaCamminiMinimi(camminiMinimi, k, dijkstra(d), numGrafi);
+            numGrafi++;
+        } else if (res[0] == 'T') {
+            topk(camminiMinimi, numGrafi, k);
         }
-        numGrafo++;
+
     }
     return 0;
 }
